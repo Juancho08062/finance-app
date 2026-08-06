@@ -49,6 +49,17 @@ class Debt(db.Model):
 
     def __repr__(self):
         return f'<Debt {self.name} ${self.remaining_balance}>'
+
+class SavingsGoal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    target_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    current_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    target_date = db.Column(db.Date, nullable=True)
+
+    def __repr__(self):
+        return f'<SavingsGoal {self.name} ${self.current_amount}/{self.target_amount}>'
     
 @app.route('/')
 def home():
