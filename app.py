@@ -60,6 +60,15 @@ class SavingsGoal(db.Model):
 
     def __repr__(self):
         return f'<SavingsGoal {self.name} ${self.current_amount}/{self.target_amount}>'
+
+class BudgetAllocation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    percentage = db.Column(db.Numeric(5, 2), nullable=False)
+
+    def __repr__(self):
+        return f'<BudgetAllocation {self.category} {self.percentage}%>'
     
 @app.route('/')
 def home():
