@@ -23,9 +23,7 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.email}>'
-
-def __repr__(self):
-        return f'<User {self.email}>'
+    
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,6 +37,19 @@ class Transaction(db.Model):
 
     def __repr__(self):
         return f'<Transaction {self.type} ${self.amount}>'
+
+class Debt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    remaining_balance = db.Column(db.Numeric(10, 2), nullable=False)
+    interest_rate = db.Column(db.Numeric(5, 2), nullable=True)
+    minimum_payment = db.Column(db.Numeric(10, 2), nullable=True)
+
+    def __repr__(self):
+        return f'<Debt {self.name} ${self.remaining_balance}>'
+    
 @app.route('/')
 def home():
     return "Hello! My finance app is working."
