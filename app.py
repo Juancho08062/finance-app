@@ -24,7 +24,21 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.email}>'
 
+def __repr__(self):
+        return f'<User {self.email}>'
 
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(20), nullable=False)       # 'income' or 'expense'
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    category = db.Column(db.String(50), nullable=True)     # e.g. 'Groceries', 'Paycheck'
+    description = db.Column(db.String(255), nullable=True)
+    date = db.Column(db.Date, nullable=False)
+    source = db.Column(db.String(20), default='manual')    # 'manual' or 'plaid' (future)
+
+    def __repr__(self):
+        return f'<Transaction {self.type} ${self.amount}>'
 @app.route('/')
 def home():
     return "Hello! My finance app is working."
