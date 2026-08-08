@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -81,7 +82,7 @@ class BudgetAllocation(db.Model):
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return f"Hello, {current_user.email}! You are logged in."
+        return f"Hello, {current_user.email}! You are logged in. <a href='/add_transaction'>Add Transaction</a> | <a href='/logout'>Logout</a>"
     return "Hello! You are not logged in. <a href='/login'>Login</a> or <a href='/register'>Register</a>"
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -125,6 +126,33 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+
+@app.route('/add_transaction', methods=['GET', 'POST'])
+@login_required
+def add_transaction():
+    if request.method == 'POST':
+        type_ = request.form.get('type')
+        amount = request.form.get('amount')
+        category = request.form.get('category')
+        description = request.form.get('description')
+        date_str = request.form.get('date')
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        new_transaction = Transaction(
+            user_id=current_user.id,
+            type=type_,
+            amount=amount,
+            category=category,
+            description=description,
+            date=date
+        )
+        db.session.add(new_transaction)
+        db.session.commit()
+
+        return redirect(url_for('home'))
+
+    return render_template('add_transaction.html')
 
 
 if __name__ == '__main__':
