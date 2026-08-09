@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Debts</title>
+</head>
+<body>
+    <h1>Your Debts</h1>
+    <p><a href="{{ url_for('add_debt') }}">Add a new debt</a> | <a href="{{ url_for('home') }}">Back to home</a></p>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Name</th>
+            <th>Total</th>
+            <th>Remaining</th>
+            <th>Interest Rate</th>
+            <th>Min Payment</th>
+        </tr>
+        {% for d in debts %}
+        <tr>
+            <td>{{ d.name }}</td>
+            <td>${{ d.total_amount }}</td>
+            <td>${{ d.remaining_balance }}</td>
+            <td>{{ d.interest_rate }}%</td>
+            <td>${{ d.minimum_payment }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

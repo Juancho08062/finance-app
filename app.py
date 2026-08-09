@@ -76,15 +76,16 @@ class BudgetAllocation(db.Model):
     category = db.Column(db.String(50), nullable=False)
     percentage = db.Column(db.Numeric(5, 2), nullable=False)
 
-    def __repr__(self):
+def __repr__(self):
         return f'<BudgetAllocation {self.category} {self.percentage}%>'
-    
+
+
+
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/logout'>Logout</a>"
-    return "Hello! You are not logged in. <a href='/login'>Login</a> or <a href='/register'>Register</a>"
-
+        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/debts'>View Debts</a> | <a href='/add_debt'>Add Debt</a> | <a href='/logout'>Logout</a>"
+    return "Hello! You are not logged in..."
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -159,6 +160,38 @@ def add_transaction():
 def transactions():
     user_transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
     return render_template('transactions.html', transactions=user_transactions)
+
+@app.route('/add_debt', methods=['GET', 'POST'])
+@login_required
+def add_debt():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        total_amount = request.form.get('total_amount')
+        remaining_balance = request.form.get('remaining_balance')
+        interest_rate = request.form.get('interest_rate') or None
+        minimum_payment = request.form.get('minimum_payment') or None
+
+        new_debt = Debt(
+            user_id=current_user.id,
+            name=name,
+            total_amount=total_amount,
+            remaining_balance=remaining_balance,
+            interest_rate=interest_rate,
+            minimum_payment=minimum_payment
+        )
+        db.session.add(new_debt)
+        db.session.commit()
+
+        return redirect(url_for('debts'))
+
+    return render_template('add_debt.html')
+
+
+@app.route('/debts')
+@login_required
+def debts():
+    user_debts = Debt.query.filter_by(user_id=current_user.id).all()
+    return render_template('debts.html', debts=user_debts)
 
 if __name__ == '__main__':
     app.run(debug=True)
