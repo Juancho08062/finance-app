@@ -81,29 +81,68 @@ def __repr__(self):
 
 
 
+def get_recommended_split(age):
+    if age is None:
+        return [('Needs', 50), ('Fun Money', 30), ('Savings', 20)]
+    elif age < 30:
+        return [('Needs', 50), ('Fun Money', 20), ('Savings', 30)]
+    elif age < 45:
+        return [('Needs', 55), ('Fun Money', 20), ('Savings', 25)]
+    elif age < 60:
+        return [('Needs', 55), ('Fun Money', 15), ('Savings', 30)]
+    else:
+        return [('Needs', 60), ('Fun Money', 15), ('Savings', 25)]
+
+    
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/debts'>View Debts</a> | <a href='/add_debt'>Add Debt</a> | <a href='/goals'>View Goals</a> | <a href='/add_goal'>Add Goal</a> | <a href='/add_allocation'>Add Allocation</a> | <a href='/summary'>Financial Summary</a> | <a href='/logout'>Logout</a>"
+        return f"Hello, {current_user.email}! You are logged in. <a href='/edit_profile'>Edit Profile</a> | <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/debts'>View Debts</a> | <a href='/add_debt'>Add Debt</a> | <a href='/goals'>View Goals</a> | <a href='/add_goal'>Add Goal</a> | <a href='/add_allocation'>Add Allocation</a> | <a href='/quick_setup_allocations'>Quick Setup (50/30/20)</a> | <a href='/summary'>Financial Summary</a> | <a href='/logout'>Logout</a>"
     return "Hello! You are not logged in..."
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        age = request.form.get('age') or None
+        income = request.form.get('income') or None
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             return "An account with that email already exists."
 
         hashed_password = generate_password_hash(password)
-        new_user = User(email=email, password_hash=hashed_password)
+        new_user = User(email=email, password_hash=hashed_password, age=age, income=income)
         db.session.add(new_user)
         db.session.commit()
 
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'POST':
+        new_email = request.form.get('email')
+        age = request.form.get('age') or None
+        income = request.form.get('income') or None
+
+        if new_email != current_user.email:
+            existing = User.query.filter_by(email=new_email).first()
+            if existing:
+                return "That email is already taken by another account."
+
+        current_user.email = new_email
+        current_user.age = age
+        current_user.income = income
+        db.session.commit()
+
+        return redirect(url_for('home'))
+
+    return render_template('edit_profile.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -186,6 +225,48 @@ def add_debt():
 
     return render_template('add_debt.html')
 
+@app.route('/delete_transaction/<int:id>')
+@login_required
+def delete_transaction(id):
+    t = Transaction.query.get_or_404(id)
+    if t.user_id != current_user.id:
+        return "Not authorized.", 403
+    db.session.delete(t)
+    db.session.commit()
+    return redirect(url_for('transactions'))
+
+
+@app.route('/delete_debt/<int:id>')
+@login_required
+def delete_debt(id):
+    d = Debt.query.get_or_404(id)
+    if d.user_id != current_user.id:
+        return "Not authorized.", 403
+    db.session.delete(d)
+    db.session.commit()
+    return redirect(url_for('debts'))
+
+
+@app.route('/delete_goal/<int:id>')
+@login_required
+def delete_goal(id):
+    g = SavingsGoal.query.get_or_404(id)
+    if g.user_id != current_user.id:
+        return "Not authorized.", 403
+    db.session.delete(g)
+    db.session.commit()
+    return redirect(url_for('goals'))
+
+
+@app.route('/delete_allocation/<int:id>')
+@login_required
+def delete_allocation(id):
+    a = BudgetAllocation.query.get_or_404(id)
+    if a.user_id != current_user.id:
+        return "Not authorized.", 403
+    db.session.delete(a)
+    db.session.commit()
+    return redirect(url_for('summary'))
 
 @app.route('/debts')
 @login_required
@@ -211,6 +292,38 @@ def add_allocation():
         return redirect(url_for('summary'))
 
     return render_template('add_allocation.html')
+
+@app.route('/quick_setup_allocations')
+@login_required
+def quick_setup_allocations():
+    if current_user.age is None:
+        return f"""
+        <h2>Please set your age first</h2>
+        <p>Quick Setup uses your age to recommend a personalized budget split. You haven't set your age yet, so we can't tailor this for you.</p>
+        <p><a href='{url_for('edit_profile')}'>Go to Edit Profile</a> to add your age, then come back here.</p>
+        <p><a href='{url_for('home')}'>Back to home</a></p>
+        """
+
+    try:
+        existing = BudgetAllocation.query.filter_by(user_id=current_user.id).all()
+        for a in existing:
+            db.session.delete(a)
+
+        recommended_split = get_recommended_split(current_user.age)
+        for category, percentage in recommended_split:
+            db.session.add(BudgetAllocation(user_id=current_user.id, category=category, percentage=percentage))
+
+        db.session.commit()
+        return redirect(url_for('summary'))
+
+    except Exception as e:
+        db.session.rollback()
+        return f"""
+        <h2>Quick Setup failed</h2>
+        <p>Something went wrong while setting up your recommended allocations.</p>
+        <p><strong>Reason:</strong> {str(e)}</p>
+        <p><a href='{url_for('home')}'>Back to home</a></p>
+        """, 500
 
 
 @app.route('/add_goal', methods=['GET', 'POST'])
@@ -251,26 +364,38 @@ def summary():
     income_transactions = Transaction.query.filter_by(user_id=current_user.id, type='income').all()
     total_income = sum(t.amount for t in income_transactions) or 0
 
+    expense_transactions = Transaction.query.filter_by(user_id=current_user.id, type='expense').all()
+    total_expenses = sum(t.amount for t in expense_transactions) or 0
+
     user_debts = Debt.query.filter_by(user_id=current_user.id).all()
+    total_debt_remaining = sum(d.remaining_balance for d in user_debts) or 0
     total_debt_payments = sum(d.minimum_payment or 0 for d in user_debts) or 0
 
-    available = total_income - total_debt_payments
+    available = total_income - total_debt_payments - total_expenses
+
+    user_goals = SavingsGoal.query.filter_by(user_id=current_user.id).all()
 
     user_allocations = BudgetAllocation.query.filter_by(user_id=current_user.id).all()
     total_percentage = sum(a.percentage for a in user_allocations) or 0
 
     allocations = []
     for a in user_allocations:
-        amount = available * (a.percentage / 100)
-        allocations.append({'category': a.category, 'percentage': a.percentage, 'amount': round(amount, 2)})
+        amount = available * (a.percentage / 100) if available > 0 else 0
+        allocations.append({'id': a.id, 'category': a.category, 'percentage': a.percentage, 'amount': round(amount, 2)})
+
+    recent_transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).limit(5).all()
 
     return render_template(
         'summary.html',
         total_income=total_income,
+        total_expenses=total_expenses,
+        total_debt_remaining=total_debt_remaining,
         total_debt_payments=total_debt_payments,
         available=available,
         allocations=allocations,
-        total_percentage=total_percentage
+        total_percentage=total_percentage,
+        goals=user_goals,
+        recent_transactions=recent_transactions
     )
 if __name__ == '__main__':
     app.run(debug=True)

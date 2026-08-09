@@ -10,33 +10,52 @@
     <h2>Overview</h2>
     <table border="1" cellpadding="8">
         <tr><td>Total Income</td><td>${{ total_income }}</td></tr>
-        <tr><td>Total Debt Payments</td><td>${{ total_debt_payments }}</td></tr>
+        <tr><td>Total Expenses</td><td>${{ total_expenses }}</td></tr>
+        <tr><td>Total Debt Payments (monthly)</td><td>${{ total_debt_payments }}</td></tr>
+        <tr><td>Total Debt Remaining</td><td>${{ total_debt_remaining }}</td></tr>
         <tr><td><strong>Available to Allocate</strong></td><td><strong>${{ available }}</strong></td></tr>
     </table>
 
     {% if available <= 0 %}
-    <p style="color: red;"><strong>Note:</strong> You have no money available to allocate right now — your income is fully absorbed by debt payments. The percentages below are saved, but the dollar amounts will be $0 until your available money increases.</p>
+    <p style="color: red;"><strong>Note:</strong> You have no money available to allocate right now. The percentages below are saved, but dollar amounts will be $0 until your available money increases.</p>
     {% endif %}
 
     <h2>Your Allocations</h2>
     {% if allocations %}
     <table border="1" cellpadding="8">
-        <tr>
-            <th>Category</th>
-            <th>Percentage</th>
-            <th>Amount</th>
-        </tr>
+        <tr><th>Category</th><th>Percentage</th><th>Amount</th><th>Action</th></tr>
         {% for a in allocations %}
-        <tr>
-            <td>{{ a.category }}</td>
-            <td>{{ a.percentage }}%</td>
-            <td>${{ a.amount }}</td>
-        </tr>
+        <tr><td>{{ a.category }}</td><td>{{ a.percentage }}%</td><td>${{ a.amount }}</td><td><a href="{{ url_for('delete_allocation', id=a.id) }}" onclick="return confirm('Delete this allocation?')">Delete</a></td></tr>
         {% endfor %}
     </table>
     <p>Total allocated: {{ total_percentage }}%</p>
     {% else %}
-    <p>You haven't set up any budget allocations yet.</p>
+    <p>You haven't set up any budget allocations yet. <a href="{{ url_for('quick_setup_allocations') }}">Use recommended split</a></p>
+    {% endif %}
+
+    <h2>Savings Goals</h2>
+    {% if goals %}
+    <table border="1" cellpadding="8">
+        <tr><th>Goal</th><th>Progress</th><th>Target Date</th></tr>
+        {% for g in goals %}
+        <tr><td>{{ g.name }}</td><td>${{ g.current_amount }} / ${{ g.target_amount }}</td><td>{{ g.target_date or 'No deadline' }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No savings goals yet. <a href="{{ url_for('add_goal') }}">Add one</a></p>
+    {% endif %}
+
+    <h2>Recent Transactions</h2>
+    {% if recent_transactions %}
+    <table border="1" cellpadding="8">
+        <tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr>
+        {% for t in recent_transactions %}
+        <tr><td>{{ t.date }}</td><td>{{ t.type }}</td><td>{{ t.category }}</td><td>${{ t.amount }}</td></tr>
+        {% endfor %}
+    </table>
+    <p><a href="{{ url_for('transactions') }}">View all transactions</a></p>
+    {% else %}
+    <p>No transactions yet. <a href="{{ url_for('add_transaction') }}">Add one</a></p>
     {% endif %}
 </body>
 </html>

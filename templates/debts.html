@@ -16,14 +16,15 @@
             <th>Min Payment</th>
         </tr>
         {% for d in debts %}
-        <tr>
-            <td>{{ d.name }}</td>
-            <td>${{ d.total_amount }}</td>
-            <td>${{ d.remaining_balance }}</td>
-            <td>{{ d.interest_rate }}%</td>
-            <td>${{ d.minimum_payment }}</td>
-        </tr>
-        {% endfor %}
+<tr>
+    <td>{{ d.name }}</td>
+    <td>${{ d.total_amount }}</td>
+    <td>${{ d.remaining_balance }}</td>
+    <td>{{ d.interest_rate }}%</td>
+    <td>${{ d.minimum_payment }}</td>
+    <td><a href="{{ url_for('delete_debt', id=d.id) }}" onclick="return confirm('Delete this debt?')">Delete</a></td>
+</tr>
+{% endfor %}
     </table>
 </body>
 </html>

@@ -14,12 +14,13 @@
             <th>Target Date</th>
         </tr>
         {% for g in goals %}
-        <tr>
-            <td>{{ g.name }}</td>
-            <td>${{ g.current_amount }} / ${{ g.target_amount }}</td>
-            <td>{{ g.target_date or 'No deadline' }}</td>
-        </tr>
-        {% endfor %}
+<tr>
+    <td>{{ g.name }}</td>
+    <td>${{ g.current_amount }} / ${{ g.target_amount }}</td>
+    <td>{{ g.target_date or 'No deadline' }}</td>
+    <td><a href="{{ url_for('delete_goal', id=g.id) }}" onclick="return confirm('Delete this goal?')">Delete</a></td>
+</tr>
+{% endfor %}
     </table>
 </body>
 </html>
