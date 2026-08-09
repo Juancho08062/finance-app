@@ -82,7 +82,7 @@ class BudgetAllocation(db.Model):
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return f"Hello, {current_user.email}! You are logged in. <a href='/add_transaction'>Add Transaction</a> | <a href='/logout'>Logout</a>"
+        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/logout'>Logout</a>"
     return "Hello! You are not logged in. <a href='/login'>Login</a> or <a href='/register'>Register</a>"
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -154,6 +154,11 @@ def add_transaction():
 
     return render_template('add_transaction.html')
 
+@app.route('/transactions')
+@login_required
+def transactions():
+    user_transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
+    return render_template('transactions.html', transactions=user_transactions)
 
 if __name__ == '__main__':
     app.run(debug=True)
