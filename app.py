@@ -84,7 +84,7 @@ def __repr__(self):
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/debts'>View Debts</a> | <a href='/add_debt'>Add Debt</a> | <a href='/logout'>Logout</a>"
+        return f"Hello, {current_user.email}! You are logged in. <a href='/transactions'>View Transactions</a> | <a href='/add_transaction'>Add Transaction</a> | <a href='/debts'>View Debts</a> | <a href='/add_debt'>Add Debt</a> | <a href='/goals'>View Goals</a> | <a href='/add_goal'>Add Goal</a> | <a href='/add_allocation'>Add Allocation</a> | <a href='/summary'>Financial Summary</a> | <a href='/logout'>Logout</a>"
     return "Hello! You are not logged in..."
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -193,5 +193,84 @@ def debts():
     user_debts = Debt.query.filter_by(user_id=current_user.id).all()
     return render_template('debts.html', debts=user_debts)
 
+@app.route('/add_allocation', methods=['GET', 'POST'])
+@login_required
+def add_allocation():
+    if request.method == 'POST':
+        category = request.form.get('category')
+        percentage = request.form.get('percentage')
+
+        new_allocation = BudgetAllocation(
+            user_id=current_user.id,
+            category=category,
+            percentage=percentage
+        )
+        db.session.add(new_allocation)
+        db.session.commit()
+
+        return redirect(url_for('summary'))
+
+    return render_template('add_allocation.html')
+
+
+@app.route('/add_goal', methods=['GET', 'POST'])
+@login_required
+def add_goal():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        target_amount = request.form.get('target_amount')
+        current_amount = request.form.get('current_amount') or 0
+        target_date_str = request.form.get('target_date')
+        target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date() if target_date_str else None
+
+        new_goal = SavingsGoal(
+            user_id=current_user.id,
+            name=name,
+            target_amount=target_amount,
+            current_amount=current_amount,
+            target_date=target_date
+        )
+        db.session.add(new_goal)
+        db.session.commit()
+
+        return redirect(url_for('goals'))
+
+    return render_template('add_goal.html')
+
+
+@app.route('/goals')
+@login_required
+def goals():
+    user_goals = SavingsGoal.query.filter_by(user_id=current_user.id).all()
+    return render_template('goals.html', goals=user_goals)
+
+
+@app.route('/summary')
+@login_required
+def summary():
+    income_transactions = Transaction.query.filter_by(user_id=current_user.id, type='income').all()
+    total_income = sum(t.amount for t in income_transactions) or 0
+
+    user_debts = Debt.query.filter_by(user_id=current_user.id).all()
+    total_debt_payments = sum(d.minimum_payment or 0 for d in user_debts) or 0
+
+    available = total_income - total_debt_payments
+
+    user_allocations = BudgetAllocation.query.filter_by(user_id=current_user.id).all()
+    total_percentage = sum(a.percentage for a in user_allocations) or 0
+
+    allocations = []
+    for a in user_allocations:
+        amount = available * (a.percentage / 100)
+        allocations.append({'category': a.category, 'percentage': a.percentage, 'amount': round(amount, 2)})
+
+    return render_template(
+        'summary.html',
+        total_income=total_income,
+        total_debt_payments=total_debt_payments,
+        available=available,
+        allocations=allocations,
+        total_percentage=total_percentage
+    )
 if __name__ == '__main__':
     app.run(debug=True)

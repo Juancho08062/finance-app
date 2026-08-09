@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Savings Goals</title>
+</head>
+<body>
+    <h1>Your Savings Goals</h1>
+    <p><a href="{{ url_for('add_goal') }}">Add a new goal</a> | <a href="{{ url_for('home') }}">Back to home</a></p>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Name</th>
+            <th>Progress</th>
+            <th>Target Date</th>
+        </tr>
+        {% for g in goals %}
+        <tr>
+            <td>{{ g.name }}</td>
+            <td>${{ g.current_amount }} / ${{ g.target_amount }}</td>
+            <td>{{ g.target_date or 'No deadline' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

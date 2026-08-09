@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Financial Summary</title>
+</head>
+<body>
+    <h1>Financial Summary</h1>
+    <p><a href="{{ url_for('home') }}">Back to home</a></p>
+
+    <h2>Overview</h2>
+    <table border="1" cellpadding="8">
+        <tr><td>Total Income</td><td>${{ total_income }}</td></tr>
+        <tr><td>Total Debt Payments</td><td>${{ total_debt_payments }}</td></tr>
+        <tr><td><strong>Available to Allocate</strong></td><td><strong>${{ available }}</strong></td></tr>
+    </table>
+
+    {% if available <= 0 %}
+    <p style="color: red;"><strong>Note:</strong> You have no money available to allocate right now — your income is fully absorbed by debt payments. The percentages below are saved, but the dollar amounts will be $0 until your available money increases.</p>
+    {% endif %}
+
+    <h2>Your Allocations</h2>
+    {% if allocations %}
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Category</th>
+            <th>Percentage</th>
+            <th>Amount</th>
+        </tr>
+        {% for a in allocations %}
+        <tr>
+            <td>{{ a.category }}</td>
+            <td>{{ a.percentage }}%</td>
+            <td>${{ a.amount }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p>Total allocated: {{ total_percentage }}%</p>
+    {% else %}
+    <p>You haven't set up any budget allocations yet.</p>
+    {% endif %}
+</body>
+</html>
