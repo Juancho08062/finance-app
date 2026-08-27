@@ -77,6 +77,7 @@ class BudgetAllocation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     percentage = db.Column(db.Numeric(5, 2), nullable=False)
+    priority = db.Column(db.Integer, nullable=False, default=5)  # 1-10, how important this category is to the user
 
     def __repr__(self):
         return f'<BudgetAllocation {self.category} {self.percentage}%>'
@@ -357,6 +358,21 @@ def delete_goal(id):
     return redirect(url_for('goals'))
 
 
+def recompute_allocation_percentages(user_id):
+    """Derive each allocation's percentage from its priority (1-10) relative to the others, always summing to 100."""
+    allocations = BudgetAllocation.query.filter_by(user_id=user_id).all()
+    total_priority = sum(a.priority for a in allocations)
+    if not allocations or total_priority <= 0:
+        return
+
+    running = 0
+    for a in allocations[:-1]:
+        pct = round(a.priority / total_priority * 100, 2)
+        running += pct
+        a.percentage = pct
+    allocations[-1].percentage = round(100 - running, 2)
+
+
 @app.route('/delete_allocation/<int:id>')
 @login_required
 def delete_allocation(id):
@@ -364,8 +380,15 @@ def delete_allocation(id):
     if a.user_id != current_user.id:
         return "Not authorized.", 403
     db.session.delete(a)
+    db.session.flush()
+
+    if BudgetAllocation.query.filter_by(user_id=current_user.id).first():
+        recompute_allocation_percentages(current_user.id)
+        flash('Allocation deleted — the rest were rebalanced to total 100%.', 'success')
+    else:
+        flash('Allocation deleted.', 'success')
+
     db.session.commit()
-    flash('Allocation deleted.', 'success')
     return redirect(url_for('summary'))
 
 @app.route('/debts')
@@ -379,17 +402,22 @@ def debts():
 def add_allocation():
     if request.method == 'POST':
         category = request.form.get('category')
-        percentage = request.form.get('percentage')
+        priority = int(request.form.get('priority') or 5)
+        priority = min(10, max(1, priority))
 
         new_allocation = BudgetAllocation(
             user_id=current_user.id,
             category=category,
-            percentage=percentage
+            percentage=0,
+            priority=priority
         )
         db.session.add(new_allocation)
+        db.session.flush()
+
+        recompute_allocation_percentages(current_user.id)
         db.session.commit()
 
-        flash('Allocation added.', 'success')
+        flash('Allocation added — percentages recalculated based on importance.', 'success')
         return redirect(url_for('summary'))
 
     return render_template('add_allocation.html')
@@ -410,7 +438,12 @@ def quick_setup_allocations():
         recommended_split = get_recommended_split(current_user.age, picture)
 
         for category, percentage in recommended_split:
-            db.session.add(BudgetAllocation(user_id=current_user.id, category=category, percentage=percentage))
+            db.session.add(BudgetAllocation(
+                user_id=current_user.id,
+                category=category,
+                percentage=percentage,
+                priority=max(1, round(percentage))
+            ))
 
         db.session.commit()
         flash('Recommended budget split applied.', 'success')

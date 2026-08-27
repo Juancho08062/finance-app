@@ -4,6 +4,7 @@
 <div class="breadcrumb"><a href="{{ url_for('summary') }}">Summary</a> / Add Allocation</div>
 <div class="card form-card">
     <h1>Add a Budget Allocation</h1>
+    <p class="hint" style="margin-bottom:20px;">You don't pick the percentage — rate how important this category is to you and we'll work out the split automatically, weighed against your other categories.</p>
     <form method="POST">
         <div class="field">
             <label for="category">Category</label>
@@ -11,8 +12,13 @@
         </div>
 
         <div class="field">
-            <label for="percentage">Percentage</label>
-            <input type="number" id="percentage" step="0.01" min="0" max="100" name="percentage" placeholder="0" required>
+            <label for="priority">Importance <span id="priority-label" class="hint">(5 — Balanced)</span></label>
+            <input type="range" id="priority" name="priority" min="1" max="10" value="5"
+                   oninput="document.getElementById('priority-label').textContent = '(' + this.value + ' — ' + priorityText(this.value) + ')'">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--ink-500); margin-top:4px;">
+                <span>Low priority</span>
+                <span>Essential</span>
+            </div>
         </div>
 
         <div class="form-actions">
@@ -21,4 +27,17 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function priorityText(v) {
+    v = parseInt(v, 10);
+    if (v <= 2) return 'Low priority';
+    if (v <= 4) return 'Nice to have';
+    if (v <= 6) return 'Balanced';
+    if (v <= 8) return 'Important';
+    return 'Essential';
+}
+</script>
 {% endblock %}
