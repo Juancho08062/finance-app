@@ -4,7 +4,7 @@
 
 <div class="page-header">
     <div>
-        <h1>Welcome back{{ ', ' + current_user.email.split('@')[0] if current_user.email else '' }}</h1>
+        <h1>Welcome back, {{ current_user.display_name }}</h1>
         <p>Here's where your money stands today.</p>
     </div>
     <div class="hero-actions" style="justify-content:flex-end;">
