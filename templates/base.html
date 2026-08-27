@@ -21,6 +21,7 @@
                     <a href="{{ url_for('debts') }}" class="{{ 'active' if request.endpoint in ['debts', 'add_debt'] }}">Debts</a>
                     <a href="{{ url_for('goals') }}" class="{{ 'active' if request.endpoint in ['goals', 'add_goal', 'add_to_goal'] }}">Goals</a>
                     <a href="{{ url_for('summary') }}" class="{{ 'active' if request.endpoint in ['summary', 'add_allocation'] }}">Summary</a>
+                    <a href="{{ url_for('projection') }}" class="{{ 'active' if request.endpoint == 'projection' }}">Projections</a>
                     <a href="{{ url_for('edit_profile') }}" class="{{ 'active' if request.endpoint == 'edit_profile' }}">Profile</a>
                 </div>
                 <div class="nav-right">

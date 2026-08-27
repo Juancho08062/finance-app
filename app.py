@@ -1,4 +1,5 @@
 import os
+import math
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -108,6 +109,45 @@ def classify_category(category_name):
         return 'discretionary', 7
     else:
         return 'other', 8
+
+
+# Deliberately conservative "floor" assumptions, not historical averages — a projection
+# should lean toward the low end of what's plausible rather than the optimistic case.
+# These are speculative estimates for a hypothetical scenario, not guaranteed returns.
+TIER_DEFAULT_RATES = {
+    'essential': 0.0,
+    'discretionary': 0.0,
+    'emergency_fund': 1.5,
+    'cash_savings': 1.5,
+    'other': 2.0,
+    'retirement': 5.0,
+    'investing': 5.0,
+    'crypto': 0.0,
+}
+
+TIER_LABELS = {
+    'essential': 'Essential / Needs',
+    'discretionary': 'Discretionary / Fun',
+    'emergency_fund': 'Emergency Fund',
+    'cash_savings': 'Cash Savings',
+    'other': 'Other',
+    'retirement': 'Retirement (401k/IRA)',
+    'investing': 'Investing (stocks/ETFs)',
+    'crypto': 'Crypto',
+}
+
+PROJECTION_HORIZONS = [5, 10, 20, 30]
+PROJECTION_MAX_YEARS = 30
+
+
+def future_value_of_contributions(monthly_contribution, annual_rate_pct, months):
+    """Future value of a level monthly contribution, compounded monthly."""
+    if months <= 0 or monthly_contribution <= 0:
+        return 0.0
+    monthly_rate = (annual_rate_pct / 100) / 12
+    if monthly_rate == 0:
+        return monthly_contribution * months
+    return monthly_contribution * (((1 + monthly_rate) ** months - 1) / monthly_rate) * (1 + monthly_rate)
 
 
 def get_financial_picture(user):
@@ -609,5 +649,83 @@ def summary():
         goals=user_goals,
         recent_transactions=recent_transactions
     )
+
+
+@app.route('/projection')
+@login_required
+def projection():
+    income_transactions = Transaction.query.filter_by(user_id=current_user.id, type='income').all()
+    total_income = sum(t.amount for t in income_transactions) or 0
+    expense_transactions = Transaction.query.filter_by(user_id=current_user.id, type='expense').all()
+    total_expenses = sum(t.amount for t in expense_transactions) or 0
+    available = float(total_income - total_expenses)
+
+    user_allocations = BudgetAllocation.query.filter_by(user_id=current_user.id).all()
+
+    default_monthly = round(max(0, available), 2)
+    monthly_amount = request.args.get('monthly_amount', type=float)
+    if monthly_amount is None:
+        monthly_amount = default_monthly
+    monthly_amount = max(0, monthly_amount)
+
+    category_rows = []
+    for a in user_allocations:
+        tier, _ = classify_category(a.category)
+        default_rate = TIER_DEFAULT_RATES.get(tier, 2.0)
+        rate = request.args.get(f'rate_{a.id}', type=float)
+        if rate is None:
+            rate = default_rate
+        rate = max(0, rate)
+        monthly_contribution = round(monthly_amount * (float(a.percentage) / 100), 2)
+        category_rows.append({
+            'id': a.id,
+            'category': a.category,
+            'tier': tier,
+            'tier_label': TIER_LABELS.get(tier, tier.replace('_', ' ').title()),
+            'percentage': a.percentage,
+            'monthly_contribution': monthly_contribution,
+            'rate': rate,
+            'default_rate': default_rate,
+        })
+
+    projections = {}
+    for years in PROJECTION_HORIZONS:
+        months = years * 12
+        total = sum(future_value_of_contributions(c['monthly_contribution'], c['rate'], months) for c in category_rows)
+        contributed = sum(c['monthly_contribution'] * months for c in category_rows)
+        projections[years] = {
+            'total': round(total, 2),
+            'contributed': round(contributed, 2),
+            'growth': round(total - contributed, 2),
+        }
+
+    series = []
+    for y in range(0, PROJECTION_MAX_YEARS + 1):
+        months = y * 12
+        total = sum(future_value_of_contributions(c['monthly_contribution'], c['rate'], months) for c in category_rows)
+        series.append(round(total, 2))
+
+    user_debts = Debt.query.filter_by(user_id=current_user.id).all()
+    total_debt_remaining = float(sum(d.remaining_balance for d in user_debts) or 0)
+    total_min_payment = float(sum(d.minimum_payment or 0 for d in user_debts) or 0)
+    months_to_payoff = None
+    if total_debt_remaining > 0 and total_min_payment > 0:
+        months_to_payoff = math.ceil(total_debt_remaining / total_min_payment)
+
+    return render_template(
+        'projection.html',
+        monthly_amount=monthly_amount,
+        default_monthly=default_monthly,
+        category_rows=category_rows,
+        horizons=PROJECTION_HORIZONS,
+        projections=projections,
+        series=series,
+        max_years=PROJECTION_MAX_YEARS,
+        total_debt_remaining=total_debt_remaining,
+        total_min_payment=total_min_payment,
+        months_to_payoff=months_to_payoff,
+    )
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=int(os.environ.get('PORT', 5000)))
