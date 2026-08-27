@@ -456,16 +456,57 @@ def add_to_goal(id):
     if request.method == 'POST':
         amount = float(request.form.get('amount'))
         goal.current_amount = float(goal.current_amount) + amount
+
+        db.session.add(Transaction(
+            user_id=current_user.id,
+            type='expense',
+            amount=amount,
+            category=f'Goal: {goal.name}',
+            description=f'Contribution to savings goal "{goal.name}"',
+            date=datetime.now().date()
+        ))
         db.session.commit()
 
         if goal.current_amount >= goal.target_amount:
             flash(f'🎉 Goal reached! "{goal.name}" is fully funded.', 'success')
         else:
-            flash('Funds added to your goal.', 'success')
+            flash('Funds added to your goal — this amount has been deducted from your available balance.', 'success')
 
         return redirect(url_for('goals'))
 
     return render_template('add_to_goal.html', goal=goal)
+
+
+@app.route('/add_debt_payment/<int:id>', methods=['GET', 'POST'])
+@login_required
+def add_debt_payment(id):
+    debt = Debt.query.get_or_404(id)
+    if debt.user_id != current_user.id:
+        return "Not authorized.", 403
+
+    if request.method == 'POST':
+        amount = float(request.form.get('amount'))
+        debt.remaining_balance = max(0, float(debt.remaining_balance) - amount)
+
+        db.session.add(Transaction(
+            user_id=current_user.id,
+            type='expense',
+            amount=amount,
+            category=f'Debt Payment: {debt.name}',
+            description=f'Payment toward "{debt.name}"',
+            date=datetime.now().date(),
+            debt_id=debt.id
+        ))
+        db.session.commit()
+
+        if debt.remaining_balance <= 0:
+            flash(f'🎉 "{debt.name}" is paid off!', 'success')
+        else:
+            flash('Payment recorded — this amount has been deducted from your available balance.', 'success')
+
+        return redirect(url_for('debts'))
+
+    return render_template('add_debt_payment.html', debt=debt)
 
 
 @app.route('/goals')
