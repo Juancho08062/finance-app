@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Make a Payment{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('debts') }}">Debts</a> / Make Payment</div>
+<div class="card form-card">
+    <h1>Pay Down "{{ debt.name }}"</h1>
+    {% set paid_pct = ((debt.total_amount - debt.remaining_balance) / debt.total_amount * 100) if debt.total_amount else 0 %}
+    <p>Remaining balance: ${{ '%.2f'|format(debt.remaining_balance) }} of ${{ '%.2f'|format(debt.total_amount) }}</p>
+    <div class="progress-track" style="margin-bottom:22px;">
+        <div class="progress-fill {{ 'complete' if paid_pct >= 100 }}" style="width: {{ [paid_pct, 100]|min }}%;"></div>
+    </div>
+
+    <form method="POST">
+        <div class="field">
+            <label for="amount">Payment amount</label>
+            <input type="number" id="amount" step="0.01" min="0.01" name="amount" placeholder="0.00" required>
+            <p class="hint">This will be logged as an expense and deducted from your available balance.</p>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Make Payment</button>
+            <a href="{{ url_for('debts') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
