@@ -1,16 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h1>Log In</h1>
-    <form method="POST">
-        <label>Email:</label>
-        <input type="email" name="email" required><br><br>
-        <label>Password:</label>
-        <input type="password" name="password" required><br><br>
-        <button type="submit">Log In</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Log In{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card card">
+        <div class="auth-logo">
+            <span class="brand-mark" style="width:40px;height:40px;font-size:1.2rem;">M</span>
+        </div>
+        <h1 style="text-align:center;">Welcome back</h1>
+        <p style="text-align:center;">Log in to see your full financial picture.</p>
+        <form method="POST">
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Log In</button>
+        </form>
+        <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Create one</a></p>
+    </div>
+</div>
+{% endblock %}

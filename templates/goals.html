@@ -1,26 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Your Savings Goals</title>
-</head>
-<body>
-    <h1>Your Savings Goals</h1>
-    <p><a href="{{ url_for('add_goal') }}">Add a new goal</a> | <a href="{{ url_for('home') }}">Back to home</a></p>
+{% extends "base.html" %}
+{% block title %}Savings Goals{% endblock %}
+{% block content %}
+<div class="action-row">
+    <div>
+        <h1>Your Savings Goals</h1>
+        <p>Track progress toward what matters to you.</p>
+    </div>
+    <a href="{{ url_for('add_goal') }}" class="btn btn-primary">+ Add Goal</a>
+</div>
 
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Name</th>
-            <th>Progress</th>
-            <th>Target Date</th>
-        </tr>
-        {% for g in goals %}
-<tr>
-    <td>{{ g.name }}</td>
-    <td>${{ g.current_amount }} / ${{ g.target_amount }}</td>
-    <td>{{ g.target_date or 'No deadline' }}</td>
-    <td><a href="{{ url_for('delete_goal', id=g.id) }}" onclick="return confirm('Delete this goal?')">Delete</a></td>
-</tr>
-{% endfor %}
-    </table>
-</body>
-</html>
+{% if goals %}
+<div class="grid grid-3">
+    {% for g in goals %}
+    {% set pct = (g.current_amount / g.target_amount * 100) if g.target_amount else 0 %}
+    {% set reached = g.current_amount >= g.target_amount %}
+    <div class="card">
+        <div class="card-title-row">
+            <h3>{{ g.name }}{% if reached %} ✅{% endif %}</h3>
+        </div>
+        <div class="stat-value" style="font-size:1.3rem;">${{ '%.2f'|format(g.current_amount) }} <span style="color:var(--ink-500); font-weight:500; font-size:0.9rem;">/ ${{ '%.2f'|format(g.target_amount) }}</span></div>
+        <div class="progress-track" style="margin:12px 0;">
+            <div class="progress-fill {{ 'complete' if reached }}" style="width: {{ [pct, 100]|min }}%;"></div>
+        </div>
+        <p class="stat-sub">{{ g.target_date or 'No deadline' }}</p>
+        <div class="form-actions" style="margin-top:16px;">
+            <a href="{{ url_for('add_to_goal', id=g.id) }}" class="btn btn-primary btn-sm">Add Funds</a>
+            <a href="{{ url_for('delete_goal', id=g.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this goal?')">Delete</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon">🎯</div>
+        <p>No savings goals yet.</p>
+        <a href="{{ url_for('add_goal') }}" class="btn btn-primary btn-sm">Add your first goal</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

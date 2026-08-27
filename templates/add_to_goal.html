@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Add to Goal{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('goals') }}">Goals</a> / Add Funds</div>
+<div class="card form-card">
+    <h1>Add Money to "{{ goal.name }}"</h1>
+    {% set pct = (goal.current_amount / goal.target_amount * 100) if goal.target_amount else 0 %}
+    <p>Current progress: ${{ '%.2f'|format(goal.current_amount) }} / ${{ '%.2f'|format(goal.target_amount) }}</p>
+    <div class="progress-track" style="margin-bottom:22px;">
+        <div class="progress-fill {{ 'complete' if pct >= 100 }}" style="width: {{ [pct, 100]|min }}%;"></div>
+    </div>
+
+    <form method="POST">
+        <div class="field">
+            <label for="amount">Amount to add</label>
+            <input type="number" id="amount" step="0.01" min="0.01" name="amount" placeholder="0.00" required>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Add Funds</button>
+            <a href="{{ url_for('goals') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

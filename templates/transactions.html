@@ -1,30 +1,50 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Your Transactions</title>
-</head>
-<body>
-    <h1>Your Transactions</h1>
-    <p><a href="{{ url_for('add_transaction') }}">Add a new transaction</a> | <a href="{{ url_for('home') }}">Back to home</a></p>
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+<div class="action-row">
+    <div>
+        <h1>Your Transactions</h1>
+        <p>Every income and expense you've logged.</p>
+    </div>
+    <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">+ Add Transaction</a>
+</div>
 
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Amount</th>
-        </tr>
-       {% for t in transactions %}
-<tr>
-    <td>{{ t.date }}</td>
-    <td>{{ t.type }}</td>
-    <td>{{ t.category }}</td>
-    <td>{{ t.description }}</td>
-    <td>${{ t.amount }}</td>
-    <td><a href="{{ url_for('delete_transaction', id=t.id) }}" onclick="return confirm('Delete this transaction?')">Delete</a></td>
-</tr>
-{% endfor %}
-    </table>
-</body>
-</html>
+<div class="card" style="padding:0;">
+{% if transactions %}
+    <div class="table-wrap" style="border:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.date }}</td>
+                <td><span class="badge {{ 'badge-income' if t.type == 'income' else 'badge-expense' }}">{{ t.type }}</span></td>
+                <td>{{ t.category or '—' }}</td>
+                <td>{{ t.description or '—' }}</td>
+                <td class="{{ 'amount-income' if t.type == 'income' else 'amount-expense' }}">
+                    {{ '+' if t.type == 'income' else '-' }}${{ '%.2f'|format(t.amount) }}
+                </td>
+                <td><a href="{{ url_for('delete_transaction', id=t.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this transaction?')">Delete</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <div class="icon">🧾</div>
+        <p>No transactions yet.</p>
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add your first transaction</a>
+    </div>
+{% endif %}
+</div>
+{% endblock %}
