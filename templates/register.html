@@ -1,20 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
-    <h1>Create an Account</h1>
-    <form method="POST">
-        <label>Email:</label>
-        <input type="email" name="email" required><br><br>
-        <label>Password:</label>
-        <input type="password" name="password" required><br><br>
-        <label>Age:</label>
-        <input type="number" name="age"><br><br>
-        <label>Annual Income:</label>
-        <input type="number" step="0.01" name="income"><br><br>
-        <button type="submit">Register</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card card">
+        <div class="auth-logo">
+            <span class="brand-mark" style="width:40px;height:40px;font-size:1.2rem;">M</span>
+        </div>
+        <h1 style="text-align:center;">Create your account</h1>
+        <p style="text-align:center;">Takes less than a minute — you can fill in the rest later.</p>
+        <form method="POST">
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+            <div class="field">
+                <label for="age">Age <span class="hint">(optional — used to personalize recommendations)</span></label>
+                <input type="number" id="age" name="age" min="1" max="120">
+            </div>
+            <div class="field">
+                <label for="income">Annual income <span class="hint">(optional)</span></label>
+                <input type="number" id="income" name="income" step="0.01" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+        <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+    </div>
+</div>
+{% endblock %}

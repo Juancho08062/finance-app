@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Meridian — Personal Finance, Clarified{% endblock %}
+{% block content %}
+<div class="hero">
+    <h1>See your whole financial picture in one place.</h1>
+    <p>Track income and expenses, pay down debt, hit your savings goals, and get a personalized budget split — all in one clean dashboard.</p>
+    <div class="hero-actions">
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Get started free</a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary">Log in</a>
+    </div>
+</div>
+
+<div class="grid grid-3">
+    <div class="card">
+        <h3>📈 Track everything</h3>
+        <p>Log income, expenses, and debt payments and watch your available cash update automatically.</p>
+    </div>
+    <div class="card">
+        <h3>🥧 Smart budgeting</h3>
+        <p>Get a recommended budget split based on your age and financial picture — or build your own.</p>
+    </div>
+    <div class="card">
+        <h3>🎯 Hit your goals</h3>
+        <p>Set savings targets, track progress with visual indicators, and celebrate when you reach them.</p>
+    </div>
+</div>
+{% endblock %}

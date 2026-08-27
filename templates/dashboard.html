@@ -1,11 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Financial Summary{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
 
 <div class="page-header">
     <div>
-        <h1>Financial Summary</h1>
-        <p>A complete view of income, debt, allocations, and goals.</p>
+        <h1>Welcome back{{ ', ' + current_user.email.split('@')[0] if current_user.email else '' }}</h1>
+        <p>Here's where your money stands today.</p>
+    </div>
+    <div class="hero-actions" style="justify-content:flex-end;">
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">+ Add Transaction</a>
     </div>
 </div>
 
@@ -19,61 +22,43 @@
         <div class="stat-value negative">${{ '%.2f'|format(total_expenses) }}</div>
     </div>
     <div class="stat-tile">
-        <div class="stat-label">Debt Payments (monthly)</div>
-        <div class="stat-value">${{ '%.2f'|format(total_debt_payments) }}</div>
-    </div>
-    <div class="stat-tile">
         <div class="stat-label">Available to Allocate</div>
         <div class="stat-value {{ 'positive' if available >= 0 else 'negative' }}">${{ '%.2f'|format(available) }}</div>
     </div>
+    <div class="stat-tile">
+        <div class="stat-label">Total Debt Remaining</div>
+        <div class="stat-value">${{ '%.2f'|format(total_debt_remaining) }}</div>
+    </div>
 </div>
-
-{% if available <= 0 %}
-<div class="alert alert-warning">
-    You have no money available to allocate right now. Your percentages are saved, but dollar amounts will read $0 until your available cash increases.
-</div>
-{% endif %}
 
 <div class="grid grid-2" style="align-items:start;">
-    <div class="card">
+    <div class="card chart-card">
         <div class="card-title-row">
-            <h2>Your Allocations</h2>
-            <a href="{{ url_for('add_allocation') }}" class="btn btn-secondary btn-sm">+ Add</a>
+            <h2>Income vs. Expenses</h2>
         </div>
-        {% if allocations %}
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Category</th><th>%</th><th>Amount</th><th></th></tr></thead>
-                <tbody>
-                {% for a in allocations %}
-                <tr>
-                    <td>{{ a.category }}</td>
-                    <td>{{ a.percentage }}%</td>
-                    <td>${{ '%.2f'|format(a.amount) }}</td>
-                    <td><a href="{{ url_for('delete_allocation', id=a.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this allocation?')">Delete</a></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <p class="stat-sub" style="margin-top:12px;">Total allocated: {{ total_percentage }}%</p>
+        {% if total_income > 0 or total_expenses > 0 %}
+        <canvas id="incomeExpenseChart" height="220"></canvas>
         {% else %}
         <div class="empty-state">
-            <div class="icon">🥧</div>
-            <p>No budget allocations set up yet.</p>
-            <a href="{{ url_for('quick_setup_allocations') }}" class="btn btn-primary btn-sm">Use Recommended Split</a>
+            <div class="icon">📊</div>
+            <p>Add a transaction to see this chart come alive.</p>
+            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add Transaction</a>
         </div>
         {% endif %}
     </div>
 
     <div class="card chart-card">
-        <h2>Allocation Breakdown</h2>
+        <div class="card-title-row">
+            <h2>Budget Allocation</h2>
+            <a href="{{ url_for('summary') }}" class="btn btn-secondary btn-sm">Manage</a>
+        </div>
         {% if allocations %}
         <canvas id="allocationChart" height="220"></canvas>
         {% else %}
         <div class="empty-state">
-            <div class="icon">📊</div>
-            <p>Set up allocations to see this chart.</p>
+            <div class="icon">🥧</div>
+            <p>You haven't set up a budget split yet.</p>
+            <a href="{{ url_for('quick_setup_allocations') }}" class="btn btn-primary btn-sm">Use Recommended Split</a>
         </div>
         {% endif %}
     </div>
@@ -83,46 +68,43 @@
     <div class="card">
         <div class="card-title-row">
             <h2>Savings Goals</h2>
-            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">Manage</a>
+            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">View all</a>
         </div>
         {% if goals %}
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Goal</th><th>Progress</th><th>Target Date</th></tr></thead>
-                <tbody>
-                {% for g in goals %}
-                <tr>
-                    <td>{{ g.name }}</td>
-                    <td>${{ '%.2f'|format(g.current_amount) }} / ${{ '%.2f'|format(g.target_amount) }}</td>
-                    <td>{{ g.target_date or 'No deadline' }}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+        {% for g in goals[:3] %}
+        {% set pct = (g.current_amount / g.target_amount * 100) if g.target_amount else 0 %}
+        <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:6px;">
+                <strong>{{ g.name }}</strong>
+                <span>${{ '%.0f'|format(g.current_amount) }} / ${{ '%.0f'|format(g.target_amount) }}</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill {{ 'complete' if pct >= 100 }}" style="width: {{ [pct, 100]|min }}%;"></div>
+            </div>
         </div>
+        {% endfor %}
         {% else %}
         <div class="empty-state">
             <div class="icon">🎯</div>
             <p>No savings goals yet.</p>
-            <a href="{{ url_for('add_goal') }}" class="btn btn-primary btn-sm">Add one</a>
+            <a href="{{ url_for('add_goal') }}" class="btn btn-primary btn-sm">Add a Goal</a>
         </div>
         {% endif %}
     </div>
 
     <div class="card">
         <div class="card-title-row">
-            <h2>Recent Transactions</h2>
+            <h2>Recent Activity</h2>
             <a href="{{ url_for('transactions') }}" class="btn btn-secondary btn-sm">View all</a>
         </div>
         {% if recent_transactions %}
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr></thead>
+                <thead><tr><th>Date</th><th>Category</th><th>Amount</th></tr></thead>
                 <tbody>
                 {% for t in recent_transactions %}
                 <tr>
                     <td>{{ t.date }}</td>
-                    <td><span class="badge {{ 'badge-income' if t.type == 'income' else 'badge-expense' }}">{{ t.type }}</span></td>
                     <td>{{ t.category or '—' }}</td>
                     <td class="{{ 'amount-income' if t.type == 'income' else 'amount-expense' }}">
                         {{ '+' if t.type == 'income' else '-' }}${{ '%.2f'|format(t.amount) }}
@@ -135,8 +117,8 @@
         {% else %}
         <div class="empty-state">
             <div class="icon">🧾</div>
-            <p>No transactions yet.</p>
-            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add one</a>
+            <p>No transactions logged yet.</p>
+            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add Transaction</a>
         </div>
         {% endif %}
     </div>
@@ -145,9 +127,29 @@
 {% endblock %}
 
 {% block scripts %}
-{% if allocations %}
 <script>
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+{% if total_income > 0 or total_expenses > 0 %}
+new Chart(document.getElementById('incomeExpenseChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Income', 'Expenses'],
+        datasets: [{
+            data: [{{ total_income }}, {{ total_expenses }}],
+            backgroundColor: ['#0f9d58', '#d93025'],
+            borderRadius: 8,
+            maxBarThickness: 80
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } }
+    }
+});
+{% endif %}
+
+{% if allocations %}
 new Chart(document.getElementById('allocationChart'), {
     type: 'doughnut',
     data: {
@@ -164,6 +166,6 @@ new Chart(document.getElementById('allocationChart'), {
         plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } } }
     }
 });
-</script>
 {% endif %}
+</script>
 {% endblock %}

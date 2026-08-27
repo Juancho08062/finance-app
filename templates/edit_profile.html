@@ -1,22 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Profile</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<div class="card form-card">
     <h1>Edit Your Profile</h1>
     <form method="POST">
-        <label>Email:</label>
-        <input type="email" name="email" value="{{ current_user.email }}" required><br><br>
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+        </div>
 
-        <label>Age:</label>
-        <input type="number" name="age" value="{{ current_user.age or '' }}"><br><br>
+        <div class="field">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" min="1" max="120" value="{{ current_user.age or '' }}">
+        </div>
 
-        <label>Annual Income:</label>
-        <input type="number" step="0.01" name="income" value="{{ current_user.income or '' }}"><br><br>
+        <div class="field">
+            <label for="income">Annual Income</label>
+            <input type="number" id="income" name="income" step="0.01" min="0" value="{{ current_user.income or '' }}">
+        </div>
 
-        <button type="submit">Save Changes</button>
+        <div class="field">
+            <label for="employment_status">Employment Status</label>
+            <select id="employment_status" name="employment_status">
+                <option value="">— Select —</option>
+                <option value="employed" {% if current_user.employment_status == 'employed' %}selected{% endif %}>Employed (with 401k access)</option>
+                <option value="self_employed" {% if current_user.employment_status == 'self_employed' %}selected{% endif %}>Self-employed</option>
+                <option value="unemployed" {% if current_user.employment_status == 'unemployed' %}selected{% endif %}>Unemployed / Student</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
-    <p><a href="{{ url_for('home') }}">Back to home</a></p>
-</body>
-</html>
+</div>
+{% endblock %}
