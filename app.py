@@ -27,9 +27,16 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
     age = db.Column(db.Integer, nullable=True)
     income = db.Column(db.Numeric(10, 2), nullable=True)
     employment_status = db.Column(db.String(20), nullable=True)
+
+    @property
+    def display_name(self):
+        full_name = ' '.join(part for part in [self.first_name, self.last_name] if part)
+        return full_name or self.email.split('@')[0]
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -191,6 +198,8 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        first_name = request.form.get('first_name') or None
+        last_name = request.form.get('last_name') or None
         age = request.form.get('age') or None
         income = request.form.get('income') or None
 
@@ -200,7 +209,14 @@ def register():
             return render_template('register.html')
 
         hashed_password = generate_password_hash(password)
-        new_user = User(email=email, password_hash=hashed_password, age=age, income=income)
+        new_user = User(
+            email=email,
+            password_hash=hashed_password,
+            first_name=first_name,
+            last_name=last_name,
+            age=age,
+            income=income
+        )
         db.session.add(new_user)
         db.session.commit()
 
@@ -214,6 +230,8 @@ def register():
 def edit_profile():
     if request.method == 'POST':
         new_email = request.form.get('email')
+        first_name = request.form.get('first_name') or None
+        last_name = request.form.get('last_name') or None
         age = request.form.get('age') or None
         income = request.form.get('income') or None
         employment_status = request.form.get('employment_status') or None
@@ -225,6 +243,8 @@ def edit_profile():
                 return render_template('edit_profile.html')
 
         current_user.email = new_email
+        current_user.first_name = first_name
+        current_user.last_name = last_name
         current_user.age = age
         current_user.income = income
         current_user.employment_status = employment_status

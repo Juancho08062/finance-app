@@ -4,11 +4,19 @@
 <div class="auth-page">
     <div class="auth-card card">
         <div class="auth-logo">
-            <span class="brand-mark" style="width:40px;height:40px;font-size:1.2rem;">M</span>
+            <span class="brand-mark" style="width:40px;height:40px;font-size:1.2rem;">A</span>
         </div>
         <h1 style="text-align:center;">Create your account</h1>
         <p style="text-align:center;">Takes less than a minute — you can fill in the rest later.</p>
         <form method="POST">
+            <div class="field">
+                <label for="first_name">First name <span class="hint">(optional)</span></label>
+                <input type="text" id="first_name" name="first_name" placeholder="Jane">
+            </div>
+            <div class="field">
+                <label for="last_name">Last name <span class="hint">(optional)</span></label>
+                <input type="text" id="last_name" name="last_name" placeholder="Doe">
+            </div>
             <div class="field">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" placeholder="you@example.com" required>

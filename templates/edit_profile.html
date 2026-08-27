@@ -5,6 +5,16 @@
     <h1>Edit Your Profile</h1>
     <form method="POST">
         <div class="field">
+            <label for="first_name">First name</label>
+            <input type="text" id="first_name" name="first_name" value="{{ current_user.first_name or '' }}">
+        </div>
+
+        <div class="field">
+            <label for="last_name">Last name</label>
+            <input type="text" id="last_name" name="last_name" value="{{ current_user.last_name or '' }}">
+        </div>
+
+        <div class="field">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
         </div>
