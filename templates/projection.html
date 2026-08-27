@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Projections{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Future Projection</h1>
+        <p>A hypothetical scenario if you keep saving and investing on your current plan.</p>
+    </div>
+</div>
+
+<div class="alert alert-warning">
+    <div>
+        <strong>This is a speculation, not a forecast.</strong> The annual rates below are deliberately conservative
+        "floor" assumptions — the low end of what's plausible — not historical averages or a guarantee of any kind.
+        Actual returns vary and can be negative, especially for crypto. Nothing here is financial advice.
+    </div>
+</div>
+
+{% if not category_rows %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon">🔮</div>
+        <p>Set up budget allocations first so we have a plan to project.</p>
+        <a href="{{ url_for('quick_setup_allocations') }}" class="btn btn-primary btn-sm">Use Recommended Split</a>
+    </div>
+</div>
+{% else %}
+
+<form method="GET" class="card" style="margin-bottom:24px;">
+    <h2>Assumptions</h2>
+    <div class="field" style="max-width:320px;">
+        <label for="monthly_amount">Monthly amount available to save/invest</label>
+        <input type="number" id="monthly_amount" name="monthly_amount" step="0.01" min="0" value="{{ monthly_amount }}">
+        <p class="hint">Defaults to your current Available to Allocate (${{ '%.2f'|format(default_monthly) }}). Assumed to recur every month if this plan is followed.</p>
+    </div>
+
+    <div class="table-wrap" style="margin-top:16px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Tier</th>
+                    <th>Split</th>
+                    <th>$/month</th>
+                    <th>Assumed annual rate</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in category_rows %}
+            <tr>
+                <td><strong>{{ c.category }}</strong></td>
+                <td>{{ c.tier_label }}</td>
+                <td>{{ c.percentage }}%</td>
+                <td>${{ '%.2f'|format(c.monthly_contribution) }}</td>
+                <td style="max-width:140px;">
+                    <input type="number" name="rate_{{ c.id }}" step="0.1" min="0" max="30" value="{{ c.rate }}" style="width:90px; display:inline-block;">%
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Recalculate</button>
+        <a href="{{ url_for('projection') }}" class="btn btn-secondary">Reset to defaults</a>
+    </div>
+</form>
+
+<div class="grid grid-4" style="margin-bottom:24px;">
+    {% for years in horizons %}
+    <div class="stat-tile">
+        <div class="stat-label">In {{ years }} years</div>
+        <div class="stat-value positive">${{ '{:,.0f}'.format(projections[years].total) }}</div>
+        <div class="stat-sub">${{ '{:,.0f}'.format(projections[years].contributed) }} contributed + ${{ '{:,.0f}'.format(projections[years].growth) }} growth</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card chart-card" style="margin-bottom:24px;">
+    <h2>Projected Growth Over {{ max_years }} Years</h2>
+    <canvas id="projectionChart" height="260"></canvas>
+</div>
+
+<div class="card">
+    <h2>Debt Payoff Estimate</h2>
+    {% if total_debt_remaining <= 0 %}
+    <p>No outstanding debt — nothing to project here.</p>
+    {% elif total_min_payment <= 0 %}
+    <p>You have ${{ '%.2f'|format(total_debt_remaining) }} in remaining debt, but no minimum payments on file, so we can't estimate a payoff date. Add minimum payments on your debts for an estimate.</p>
+    {% else %}
+    <p>
+        At ${{ '%.2f'|format(total_min_payment) }}/month in minimum payments against ${{ '%.2f'|format(total_debt_remaining) }}
+        remaining, you'd be debt-free in about
+        <strong>{{ months_to_payoff }} months (~{{ (months_to_payoff / 12)|round(1) }} years)</strong>
+        — assuming no new debt and no interest accrual, so likely optimistic for interest-bearing balances.
+    </p>
+    {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if category_rows %}
+<script>
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+new Chart(document.getElementById('projectionChart'), {
+    type: 'line',
+    data: {
+        labels: [{% for y in range(0, max_years + 1) %}{{ y }},{% endfor %}],
+        datasets: [{
+            label: 'Projected total',
+            data: [{% for v in series %}{{ v }},{% endfor %}],
+            borderColor: '#0f62d6',
+            backgroundColor: 'rgba(15, 98, 214, 0.1)',
+            fill: true,
+            tension: 0.25,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { title: { display: true, text: 'Years' } },
+            y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
