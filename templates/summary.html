@@ -154,7 +154,7 @@ new Chart(document.getElementById('allocationChart'), {
         labels: [{% for a in allocations %}{{ a.category|tojson }},{% endfor %}],
         datasets: [{
             data: [{% for a in allocations %}{{ a.percentage }},{% endfor %}],
-            backgroundColor: ['#1877f2', '#0f9d58', '#b06a00', '#8a63d2', '#d93025', '#00acc1', '#6b7280'],
+            backgroundColor: ['#5E5CE6', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#30B0C7', '#FF2D55'],
             borderWidth: 2,
             borderColor: '#fff'
         }]
