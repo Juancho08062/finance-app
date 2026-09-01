@@ -198,12 +198,23 @@ p { color: var(--ink-700); }
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--ios-indigo), var(--ios-purple));
+  background: linear-gradient(135deg, var(--ios-purple), var(--ios-blue));
   box-shadow: 0 2px 8px rgba(94, 92, 230, 0.5);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.brand-mark svg {
+  width: 60%;
+  height: 60%;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .nav-links {
