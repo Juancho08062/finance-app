@@ -1,6 +1,6 @@
 import os
 import math
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 from emails import send_welcome_email
+from translations import t as get_translation
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
@@ -28,6 +29,18 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@app.context_processor
+def inject_translations():
+    lang = session.get('language', 'en')
+    return dict(t=lambda key: get_translation(key, lang), current_language=lang)
+
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    session['language'] = lang if lang in ('en', 'es') else 'en'
+    return redirect(request.referrer or url_for('home'))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -357,7 +370,8 @@ def add_transaction():
         return redirect(url_for('home'))
 
     user_debts = Debt.query.filter_by(user_id=current_user.id).all()
-    return render_template('add_transaction.html', debts=user_debts)
+    preselect_type = request.args.get('type')
+    return render_template('add_transaction.html', debts=user_debts, preselect_type=preselect_type)
 
 @app.route('/transactions')
 @login_required

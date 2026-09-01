@@ -4,37 +4,37 @@
 
 <div class="page-header">
     <div>
-        <h1>Welcome back, {{ current_user.display_name }}</h1>
-        <p>Here's where your money stands today.</p>
+        <h1>{{ t('dashboard_welcome') }}, {{ current_user.display_name }}</h1>
+        <p>{{ t('dashboard_subtitle') }}</p>
     </div>
     <div class="hero-actions" style="justify-content:flex-end;">
-        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">+ Add Transaction</a>
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">{{ t('btn_add_transaction') }}</a>
     </div>
 </div>
 
 <div class="grid grid-4" style="margin-bottom:24px;">
-    <div class="stat-tile">
-        <div class="stat-label">Total Income</div>
+    <a class="stat-tile stat-tile-link" href="{{ url_for('add_transaction', type='income') }}">
+        <div class="stat-label">{{ t('stat_total_income') }}</div>
         <div class="stat-value positive">${{ '%.2f'|format(total_income) }}</div>
-    </div>
-    <div class="stat-tile">
-        <div class="stat-label">Total Expenses</div>
+    </a>
+    <a class="stat-tile stat-tile-link" href="{{ url_for('add_transaction', type='expense') }}">
+        <div class="stat-label">{{ t('stat_total_expenses') }}</div>
         <div class="stat-value negative">${{ '%.2f'|format(total_expenses) }}</div>
-    </div>
-    <div class="stat-tile">
-        <div class="stat-label">Available to Allocate</div>
+    </a>
+    <a class="stat-tile stat-tile-link" href="{{ url_for('add_transaction') }}">
+        <div class="stat-label">{{ t('stat_available') }}</div>
         <div class="stat-value {{ 'positive' if available >= 0 else 'negative' }}">${{ '%.2f'|format(available) }}</div>
-    </div>
-    <div class="stat-tile">
-        <div class="stat-label">Total Debt Remaining</div>
+    </a>
+    <a class="stat-tile stat-tile-link" href="{{ url_for('add_transaction') }}">
+        <div class="stat-label">{{ t('stat_total_debt') }}</div>
         <div class="stat-value">${{ '%.2f'|format(total_debt_remaining) }}</div>
-    </div>
+    </a>
 </div>
 
 <div class="grid grid-2" style="align-items:start;">
     <div class="card chart-card">
         <div class="card-title-row">
-            <h2>Income vs. Expenses</h2>
+            <h2>{{ t('income_vs_expenses') }}</h2>
         </div>
         {% if total_income > 0 or total_expenses > 0 %}
         <canvas id="incomeExpenseChart" height="220"></canvas>
@@ -42,15 +42,15 @@
         <div class="empty-state">
             <div class="icon">📊</div>
             <p>Add a transaction to see this chart come alive.</p>
-            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add Transaction</a>
+            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">{{ t('btn_add_transaction') }}</a>
         </div>
         {% endif %}
     </div>
 
     <div class="card chart-card">
         <div class="card-title-row">
-            <h2>Budget Allocation</h2>
-            <a href="{{ url_for('summary') }}" class="btn btn-secondary btn-sm">Manage</a>
+            <h2>{{ t('budget_allocation') }}</h2>
+            <a href="{{ url_for('summary') }}" class="btn btn-secondary btn-sm">{{ t('manage') }}</a>
         </div>
         {% if allocations %}
         <canvas id="allocationChart" height="220"></canvas>
@@ -67,8 +67,8 @@
 <div class="grid grid-2" style="margin-top:20px; align-items:start;">
     <div class="card">
         <div class="card-title-row">
-            <h2>Savings Goals</h2>
-            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">View all</a>
+            <h2>{{ t('savings_goals') }}</h2>
+            <a href="{{ url_for('goals') }}" class="btn btn-secondary btn-sm">{{ t('view_all') }}</a>
         </div>
         {% if goals %}
         {% for g in goals[:3] %}
@@ -87,15 +87,15 @@
         <div class="empty-state">
             <div class="icon">🎯</div>
             <p>No savings goals yet.</p>
-            <a href="{{ url_for('add_goal') }}" class="btn btn-primary btn-sm">Add a Goal</a>
+            <a href="{{ url_for('add_goal') }}" class="btn btn-primary btn-sm">{{ t('btn_add_goal') }}</a>
         </div>
         {% endif %}
     </div>
 
     <div class="card">
         <div class="card-title-row">
-            <h2>Recent Activity</h2>
-            <a href="{{ url_for('transactions') }}" class="btn btn-secondary btn-sm">View all</a>
+            <h2>{{ t('recent_activity') }}</h2>
+            <a href="{{ url_for('transactions') }}" class="btn btn-secondary btn-sm">{{ t('view_all') }}</a>
         </div>
         {% if recent_transactions %}
         <div class="table-wrap">
@@ -118,7 +118,7 @@
         <div class="empty-state">
             <div class="icon">🧾</div>
             <p>No transactions logged yet.</p>
-            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add Transaction</a>
+            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">{{ t('btn_add_transaction') }}</a>
         </div>
         {% endif %}
     </div>
@@ -156,7 +156,7 @@ new Chart(document.getElementById('allocationChart'), {
         labels: [{% for a in allocations %}{{ a.category|tojson }},{% endfor %}],
         datasets: [{
             data: [{% for a in allocations %}{{ a.percentage }},{% endfor %}],
-            backgroundColor: ['#5E5CE6', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#30B0C7', '#FF2D55'],
+            backgroundColor: ['#007AFF', '#0A3D91', '#30B0C7', '#34C759', '#FF9500', '#5AC8FA', '#8E8E93'],
             borderWidth: 2,
             borderColor: '#fff'
         }]

@@ -4,10 +4,25 @@
 <div class="breadcrumb"><a href="{{ url_for('debts') }}">Debts</a> / Add</div>
 <div class="card form-card">
     <h1>Add a Debt</h1>
-    <form method="POST">
+    <form method="POST" id="debtForm" onsubmit="return validateDebtForm()">
         <div class="field">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="e.g. Student Loan, Visa Card" required>
+            <label for="debt_name_select">Name</label>
+            <select id="debt_name_select" onchange="handleDebtNameChange()">
+                <option value="" disabled selected>Select a debt type&hellip;</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Student Loan">Student Loan</option>
+                <option value="Car Loan">Car Loan</option>
+                <option value="Mortgage">Mortgage</option>
+                <option value="Personal Loan">Personal Loan</option>
+                <option value="Medical Debt">Medical Debt</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="hidden" id="name" name="name">
+        </div>
+
+        <div class="field" id="debt_name_other_field" style="display:none">
+            <label for="debt_name_other">Custom Name</label>
+            <input type="text" id="debt_name_other" placeholder="e.g. Visa Card" oninput="handleDebtNameOtherInput()">
         </div>
 
         <div class="field">
@@ -36,4 +51,42 @@
         </div>
     </form>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+function handleDebtNameChange() {
+    var select = document.getElementById('debt_name_select');
+    var otherField = document.getElementById('debt_name_other_field');
+    var otherInput = document.getElementById('debt_name_other');
+    var hiddenName = document.getElementById('name');
+
+    if (select.value === 'Other') {
+        otherField.style.display = '';
+        hiddenName.value = otherInput.value;
+    } else {
+        otherField.style.display = 'none';
+        otherInput.value = '';
+        hiddenName.value = select.value;
+    }
+}
+
+function handleDebtNameOtherInput() {
+    document.getElementById('name').value = document.getElementById('debt_name_other').value;
+}
+
+function validateDebtForm() {
+    var select = document.getElementById('debt_name_select');
+    var hiddenName = document.getElementById('name');
+    if (!hiddenName.value.trim()) {
+        if (select.value === 'Other') {
+            document.getElementById('debt_name_other').focus();
+        } else {
+            select.focus();
+        }
+        alert('Please choose a debt name.');
+        return false;
+    }
+    return true;
+}
+</script>
 {% endblock %}

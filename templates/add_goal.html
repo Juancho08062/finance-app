@@ -4,10 +4,26 @@
 <div class="breadcrumb"><a href="{{ url_for('goals') }}">Goals</a> / Add</div>
 <div class="card form-card">
     <h1>Add a Savings Goal</h1>
-    <form method="POST">
+    <form method="POST" id="goalForm" onsubmit="return validateGoalForm()">
         <div class="field">
-            <label for="name">Goal Name</label>
-            <input type="text" id="name" name="name" placeholder="e.g. Emergency Fund, Japan Trip" required>
+            <label for="goal_name_select">Goal Name</label>
+            <select id="goal_name_select" onchange="handleGoalNameChange()">
+                <option value="" disabled selected>Select a goal type&hellip;</option>
+                <option value="Emergency Fund">Emergency Fund</option>
+                <option value="Vacation">Vacation</option>
+                <option value="New Car">New Car</option>
+                <option value="House Down Payment">House Down Payment</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Education">Education</option>
+                <option value="Retirement">Retirement</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="hidden" id="name" name="name">
+        </div>
+
+        <div class="field" id="goal_name_other_field" style="display:none">
+            <label for="goal_name_other">Custom Name</label>
+            <input type="text" id="goal_name_other" placeholder="e.g. Japan Trip" oninput="handleGoalNameOtherInput()">
         </div>
 
         <div class="field">
@@ -31,4 +47,42 @@
         </div>
     </form>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+function handleGoalNameChange() {
+    var select = document.getElementById('goal_name_select');
+    var otherField = document.getElementById('goal_name_other_field');
+    var otherInput = document.getElementById('goal_name_other');
+    var hiddenName = document.getElementById('name');
+
+    if (select.value === 'Other') {
+        otherField.style.display = '';
+        hiddenName.value = otherInput.value;
+    } else {
+        otherField.style.display = 'none';
+        otherInput.value = '';
+        hiddenName.value = select.value;
+    }
+}
+
+function handleGoalNameOtherInput() {
+    document.getElementById('name').value = document.getElementById('goal_name_other').value;
+}
+
+function validateGoalForm() {
+    var select = document.getElementById('goal_name_select');
+    var hiddenName = document.getElementById('name');
+    if (!hiddenName.value.trim()) {
+        if (select.value === 'Other') {
+            document.getElementById('goal_name_other').focus();
+        } else {
+            select.focus();
+        }
+        alert('Please choose a goal name.');
+        return false;
+    }
+    return true;
+}
+</script>
 {% endblock %}
