@@ -10,7 +10,14 @@ RESEND_API_URL = 'https://api.resend.com/emails'
 # gradient for the button/badge — gradients are unreliable across clients,
 # a flat brand blue reads consistently everywhere. Mirrors the app's own
 # card/anchor-mark/blue-accent look from static/css/style.css.
-def _wrap_email(app_url, body_html):
+FOOTER_TEXT = {
+    'en': "You're receiving this because you signed up for Anchorpoint at {app_url}.",
+    'es': 'Recibes esto porque te registraste en Anchorpoint en {app_url}.',
+}
+
+
+def _wrap_email(app_url, body_html, lang='en'):
+    footer = FOOTER_TEXT.get(lang, FOOTER_TEXT['en']).format(app_url=app_url)
     return f"""
 <div style="background:#F2F2F7; padding:32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; margin:0 auto;">
@@ -33,7 +40,7 @@ def _wrap_email(app_url, body_html):
     </tr>
     <tr>
       <td style="padding-top:20px; text-align:center; color:#6b6b70; font-size:12px; line-height:1.5;">
-        You're receiving this because you signed up for Anchorpoint at {app_url}.
+        {footer}
       </td>
     </tr>
   </table>
@@ -87,46 +94,97 @@ def send_email(to, subject, html_body):
         return False
 
 
-def send_welcome_email(user):
-    name = user.first_name or 'there'
-    app_url = os.environ.get('APP_URL', 'http://localhost:5000')
+WELCOME_COPY = {
+    'en': {
+        'subject': 'Welcome to Anchorpoint',
+        'heading': 'Welcome to Anchorpoint, {name}.',
+        'p1': (
+            "Your account is set up. Anchorpoint gives you one place to track income and expenses, "
+            "pay down debt, hit savings goals, and see a personalized budget split — plus a projection "
+            "of where your money could be years from now if you stick with it."
+        ),
+        'p2': (
+            'A good first step: log a few recent transactions, then try '
+            '<strong>Quick Setup</strong> on the Summary page for a recommended budget split based on '
+            'your age.'
+        ),
+        'button': 'Open Anchorpoint',
+    },
+    'es': {
+        'subject': 'Bienvenido a Anchorpoint',
+        'heading': 'Bienvenido a Anchorpoint, {name}.',
+        'p1': (
+            'Tu cuenta ya está lista. Anchorpoint te da un solo lugar para llevar tus ingresos y gastos, '
+            'pagar tus deudas, alcanzar tus metas de ahorro y ver un plan de presupuesto personalizado — '
+            'además de una proyección de cómo podría verse tu dinero en el futuro si sigues el plan.'
+        ),
+        'p2': (
+            'Un buen primer paso: registra algunas transacciones recientes, y luego prueba '
+            '<strong>Configuración Rápida</strong> en la página de Resumen para obtener un plan de '
+            'presupuesto recomendado según tu edad.'
+        ),
+        'button': 'Abrir Anchorpoint',
+    },
+}
 
-    body = f"""
+CHECKIN_COPY = {
+    'en': {
+        'subject': "How's Anchorpoint working for you?",
+        'heading': "How's it going, {name}?",
+        'p1': (
+            "You signed up for Anchorpoint about a week ago. We'd love to know how it's working for you — "
+            "what's useful, what's confusing, and what you wish it did."
+        ),
+        'p2': "Just reply to this email — a real person reads it.",
+        'button': 'Open Anchorpoint',
+    },
+    'es': {
+        'subject': '¿Cómo te está funcionando Anchorpoint?',
+        'heading': '¿Cómo va todo, {name}?',
+        'p1': (
+            'Te registraste en Anchorpoint hace como una semana. Nos encantaría saber cómo te está '
+            'funcionando — qué te sirve, qué te confunde, y qué te gustaría que hiciera.'
+        ),
+        'p2': 'Solo responde a este correo — una persona real lo lee.',
+        'button': 'Abrir Anchorpoint',
+    },
+}
+
+
+def _render_body(copy, name):
+    return f"""
     <h1 style="font-size:21px; font-weight:700; letter-spacing:-0.01em; color:#1C1C1E; margin:0 0 12px;">
-      Welcome to Anchorpoint, {name}.
+      {copy['heading'].format(name=name)}
     </h1>
     <p style="font-size:15px; line-height:1.6; color:#3A3A3C; margin:0 0 16px;">
-      Your account is set up. Anchorpoint gives you one place to track income and expenses,
-      pay down debt, hit savings goals, and see a personalized budget split — plus a projection
-      of where your money could be years from now if you stick with it.
+      {copy['p1']}
     </p>
     <p style="font-size:15px; line-height:1.6; color:#3A3A3C; margin:0 0 22px;">
-      A good first step: log a few recent transactions, then try
-      <strong>Quick Setup</strong> on the Summary page for a recommended budget split based on
-      your age.
+      {copy['p2']}
     </p>
-    {_button(app_url, 'Open Anchorpoint')}
     """
-    html = _wrap_email(app_url, body)
-    return send_email(user.email, 'Welcome to Anchorpoint', html)
+
+
+FALLBACK_NAME = {'en': 'there', 'es': 'amigo'}
+
+
+def send_welcome_email(user):
+    lang = getattr(user, 'language', None) or 'en'
+    name = user.first_name or FALLBACK_NAME.get(lang, 'there')
+    app_url = os.environ.get('APP_URL', 'http://localhost:5000')
+    copy = WELCOME_COPY.get(lang, WELCOME_COPY['en'])
+
+    body = _render_body(copy, name) + _button(app_url, copy['button'])
+    html = _wrap_email(app_url, body, lang)
+    return send_email(user.email, copy['subject'], html)
 
 
 def send_checkin_email(user):
-    name = user.first_name or 'there'
+    lang = getattr(user, 'language', None) or 'en'
+    name = user.first_name or FALLBACK_NAME.get(lang, 'there')
     app_url = os.environ.get('APP_URL', 'http://localhost:5000')
+    copy = CHECKIN_COPY.get(lang, CHECKIN_COPY['en'])
 
-    body = f"""
-    <h1 style="font-size:21px; font-weight:700; letter-spacing:-0.01em; color:#1C1C1E; margin:0 0 12px;">
-      How's it going, {name}?
-    </h1>
-    <p style="font-size:15px; line-height:1.6; color:#3A3A3C; margin:0 0 16px;">
-      You signed up for Anchorpoint about a week ago. We'd love to know how it's working for you —
-      what's useful, what's confusing, and what you wish it did.
-    </p>
-    <p style="font-size:15px; line-height:1.6; color:#3A3A3C; margin:0 0 22px;">
-      Just reply to this email — a real person reads it.
-    </p>
-    {_button(app_url, 'Open Anchorpoint')}
-    """
-    html = _wrap_email(app_url, body)
-    return send_email(user.email, "How's Anchorpoint working for you?", html)
+    body = _render_body(copy, name) + _button(app_url, copy['button'])
+    html = _wrap_email(app_url, body, lang)
+    return send_email(user.email, copy['subject'], html)

@@ -39,7 +39,11 @@ def inject_translations():
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
-    session['language'] = lang if lang in ('en', 'es') else 'en'
+    lang = lang if lang in ('en', 'es') else 'en'
+    session['language'] = lang
+    if current_user.is_authenticated:
+        current_user.language = lang
+        db.session.commit()
     return redirect(request.referrer or url_for('home'))
 
 class User(db.Model, UserMixin):
@@ -53,6 +57,7 @@ class User(db.Model, UserMixin):
     employment_status = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     checkin_email_sent = db.Column(db.Boolean, nullable=False, default=False)
+    language = db.Column(db.String(5), nullable=False, default='en')
 
     @property
     def display_name(self):
@@ -275,7 +280,8 @@ def register():
             first_name=first_name,
             last_name=last_name,
             age=age,
-            income=income
+            income=income,
+            language=session.get('language', 'en')
         )
         db.session.add(new_user)
         db.session.commit()
