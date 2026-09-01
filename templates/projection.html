@@ -113,8 +113,8 @@ new Chart(document.getElementById('projectionChart'), {
         datasets: [{
             label: 'Projected total',
             data: [{% for v in series %}{{ v }},{% endfor %}],
-            borderColor: '#5E5CE6',
-            backgroundColor: 'rgba(94, 92, 230, 0.12)',
+            borderColor: '#007AFF',
+            backgroundColor: 'rgba(0, 122, 255, 0.12)',
             fill: true,
             tension: 0.25,
             pointRadius: 0

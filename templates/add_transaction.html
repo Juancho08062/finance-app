@@ -7,9 +7,9 @@
     <form method="POST">
         <div class="field">
             <label for="type">Type</label>
-            <select id="type" name="type" required>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
+            <select id="type" name="type" required onchange="updateCategoryVisibility()">
+                <option value="income" {% if preselect_type == 'income' %}selected{% endif %}>Income</option>
+                <option value="expense" {% if preselect_type == 'expense' %}selected{% endif %}>Expense</option>
             </select>
         </div>
 
@@ -18,10 +18,46 @@
             <input type="number" id="amount" step="0.01" min="0" name="amount" placeholder="0.00" required>
         </div>
 
-        <div class="field">
-            <label for="category">Category</label>
-            <input type="text" id="category" name="category" placeholder="e.g. Groceries, Paycheck">
+        <div class="field" id="income_category_field">
+            <label for="income_category">Category</label>
+            <select id="income_category" onchange="handleCategoryChange('income')">
+                <option value="">— Select a category —</option>
+                <option value="Paycheck / Salary">Paycheck / Salary</option>
+                <option value="Freelance / Contract Work">Freelance / Contract Work</option>
+                <option value="Business Income">Business Income</option>
+                <option value="Investment Income">Investment Income</option>
+                <option value="Gift">Gift</option>
+                <option value="Bonus">Bonus</option>
+                <option value="Refund">Refund</option>
+                <option value="Other">Other</option>
+            </select>
         </div>
+
+        <div class="field" id="expense_category_field">
+            <label for="expense_category">Category</label>
+            <select id="expense_category" onchange="handleCategoryChange('expense')">
+                <option value="">— Select a category —</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Rent / Mortgage">Rent / Mortgage</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Dining Out">Dining Out</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Subscriptions">Subscriptions</option>
+                <option value="Debt Payment">Debt Payment</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="field" id="other_category_field" style="display:none;">
+            <label for="other_category">Custom category</label>
+            <input type="text" id="other_category" placeholder="Enter a category" oninput="syncOtherCategory()">
+        </div>
+
+        <input type="hidden" id="category" name="category">
 
         <div class="field">
             <label for="description">Description</label>
@@ -49,4 +85,51 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function activeCategorySelect() {
+    var type = document.getElementById('type').value;
+    return document.getElementById(type === 'income' ? 'income_category' : 'expense_category');
+}
+
+function updateCategoryVisibility() {
+    var type = document.getElementById('type').value;
+    var incomeField = document.getElementById('income_category_field');
+    var expenseField = document.getElementById('expense_category_field');
+    if (type === 'income') {
+        incomeField.style.display = '';
+        expenseField.style.display = 'none';
+    } else {
+        incomeField.style.display = 'none';
+        expenseField.style.display = '';
+    }
+    handleCategoryChange(type === 'income' ? 'income' : 'expense');
+}
+
+function handleCategoryChange(source) {
+    var select = document.getElementById(source + '_category');
+    var otherField = document.getElementById('other_category_field');
+    var otherInput = document.getElementById('other_category');
+    var hidden = document.getElementById('category');
+
+    if (select.value === 'Other') {
+        otherField.style.display = '';
+        hidden.value = otherInput.value;
+    } else {
+        otherField.style.display = 'none';
+        otherInput.value = '';
+        hidden.value = select.value;
+    }
+}
+
+function syncOtherCategory() {
+    var hidden = document.getElementById('category');
+    var otherInput = document.getElementById('other_category');
+    hidden.value = otherInput.value;
+}
+
+document.addEventListener('DOMContentLoaded', updateCategoryVisibility);
+</script>
 {% endblock %}

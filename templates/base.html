@@ -24,23 +24,33 @@
                 </a>
                 {% if current_user.is_authenticated %}
                 <div class="nav-links">
-                    <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint == 'home' }}">Dashboard</a>
-                    <a href="{{ url_for('transactions') }}" class="{{ 'active' if request.endpoint in ['transactions', 'add_transaction'] }}">Transactions</a>
-                    <a href="{{ url_for('debts') }}" class="{{ 'active' if request.endpoint in ['debts', 'add_debt'] }}">Debts</a>
-                    <a href="{{ url_for('goals') }}" class="{{ 'active' if request.endpoint in ['goals', 'add_goal', 'add_to_goal'] }}">Goals</a>
-                    <a href="{{ url_for('summary') }}" class="{{ 'active' if request.endpoint in ['summary', 'add_allocation'] }}">Summary</a>
-                    <a href="{{ url_for('projection') }}" class="{{ 'active' if request.endpoint == 'projection' }}">Projections</a>
-                    <a href="{{ url_for('edit_profile') }}" class="{{ 'active' if request.endpoint == 'edit_profile' }}">Profile</a>
+                    <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint == 'home' }}">{{ t('nav_dashboard') }}</a>
+                    <a href="{{ url_for('transactions') }}" class="{{ 'active' if request.endpoint in ['transactions', 'add_transaction'] }}">{{ t('nav_transactions') }}</a>
+                    <a href="{{ url_for('debts') }}" class="{{ 'active' if request.endpoint in ['debts', 'add_debt'] }}">{{ t('nav_debts') }}</a>
+                    <a href="{{ url_for('goals') }}" class="{{ 'active' if request.endpoint in ['goals', 'add_goal', 'add_to_goal'] }}">{{ t('nav_goals') }}</a>
+                    <a href="{{ url_for('summary') }}" class="{{ 'active' if request.endpoint in ['summary', 'add_allocation'] }}">{{ t('nav_summary') }}</a>
+                    <a href="{{ url_for('projection') }}" class="{{ 'active' if request.endpoint == 'projection' }}">{{ t('nav_projections') }}</a>
+                    <a href="{{ url_for('edit_profile') }}" class="{{ 'active' if request.endpoint == 'edit_profile' }}">{{ t('nav_profile') }}</a>
                 </div>
                 <div class="nav-right">
+                    <div class="lang-switch">
+                        <a href="{{ url_for('set_language', lang='en') }}" class="{{ 'active' if current_language == 'en' }}">EN</a>
+                        <span class="lang-switch-sep">|</span>
+                        <a href="{{ url_for('set_language', lang='es') }}" class="{{ 'active' if current_language == 'es' }}">ES</a>
+                    </div>
                     <span class="nav-user">{{ current_user.email }}</span>
-                    <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Log out</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">{{ t('nav_logout') }}</a>
                 </div>
                 {% else %}
                 <div class="nav-links"></div>
                 <div class="nav-right">
-                    <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm">Log in</a>
-                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Get started</a>
+                    <div class="lang-switch">
+                        <a href="{{ url_for('set_language', lang='en') }}" class="{{ 'active' if current_language == 'en' }}">EN</a>
+                        <span class="lang-switch-sep">|</span>
+                        <a href="{{ url_for('set_language', lang='es') }}" class="{{ 'active' if current_language == 'es' }}">ES</a>
+                    </div>
+                    <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm">{{ t('nav_login') }}</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">{{ t('nav_get_started') }}</a>
                 </div>
                 {% endif %}
             </div>
