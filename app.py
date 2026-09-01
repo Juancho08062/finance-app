@@ -8,6 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
 
+from emails import send_welcome_email
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
@@ -36,6 +38,8 @@ class User(db.Model, UserMixin):
     age = db.Column(db.Integer, nullable=True)
     income = db.Column(db.Numeric(10, 2), nullable=True)
     employment_status = db.Column(db.String(20), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    checkin_email_sent = db.Column(db.Boolean, nullable=False, default=False)
 
     @property
     def display_name(self):
@@ -262,6 +266,8 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
+
+        send_welcome_email(new_user)
 
         flash('Account created — log in to get started.', 'success')
         return redirect(url_for('login'))

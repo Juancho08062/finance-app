@@ -55,14 +55,24 @@ cd ~/finance-app
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Copy the printed value, then create the `.env` file:
+Copy the printed value, then create the `.env` file (also see `.env.example` in the repo):
 
 ```bash
-echo "SECRET_KEY=<paste-the-generated-value-here>" > .env
+cat > .env << 'EOF'
+SECRET_KEY=<paste-the-generated-value-here>
+RESEND_API_KEY=<your-resend-api-key>
+EMAIL_FROM=Anchorpoint <onboarding@resend.dev>
+APP_URL=https://<your-username>.pythonanywhere.com
+EOF
 ```
 
 **Do NOT add a `DATABASE_URL` line.** Leaving it unset is what makes `app.py` fall back to
 SQLite automatically (`sqlite:///.../finance.db` next to `app.py`).
+
+**Getting `RESEND_API_KEY`:** sign up free at https://resend.com (no domain verification needed
+to start — `onboarding@resend.dev` works immediately as the sender). Create an API key from
+their dashboard and paste it in above. Confirmed: `api.resend.com` is on PythonAnywhere's
+free-tier outbound whitelist, so this works without needing a paid PythonAnywhere account.
 
 ## Step 6 — Create the web app (Manual configuration) and edit the WSGI file
 
@@ -137,7 +147,28 @@ https://<your-username>.pythonanywhere.com
 
 You should see the Anchorpoint landing page.
 
-## Step 11 — If something's wrong
+## Step 11 — Schedule the 7-day check-in email
+
+New signups get a welcome email immediately (built into the `/register` route — nothing to
+configure). The 7-day "how's it going" follow-up needs a daily scheduled task, since it has to
+run on its own regardless of whether anyone visits the site that day.
+
+1. Go to the **Tasks** tab.
+2. Add a **Daily** task (free accounts get one). Pick any time — early morning is typical.
+3. Set the command to:
+
+```bash
+/home/<your-username>/.virtualenvs/anchorpoint-venv/bin/python /home/<your-username>/finance-app/send_checkin_emails.py
+```
+
+(Use the full path to the virtualenv's Python interpreter, not just `python3` — scheduled tasks
+don't activate your virtualenv the way a Bash console does.)
+
+This runs `send_checkin_emails.py`, which finds every user who signed up 7+ days ago and hasn't
+been checked in on yet, sends them one email, and marks them so they're never emailed twice. You
+can test it manually anytime from a Bash console with the same command.
+
+## Step 12 — If something's wrong
 
 If you get a 500 error or the site won't load, the Web tab has an **Error log** link near the
 top (next to Server log and Access log) — click it to see the actual Python traceback. Common
